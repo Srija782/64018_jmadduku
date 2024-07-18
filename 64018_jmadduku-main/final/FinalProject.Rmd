@@ -1,0 +1,227 @@
+---
+title: 'Group7_Final Project_64036'
+output:
+  pdf_document:
+    toc: yes
+  word_document:
+    toc: yes
+  html_document:
+    toc: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Data Preparation
+
+```{r}
+FinalProjectx<-read.csv("GaskinQMMx.csv")
+str(FinalProjectx)
+head(FinalProjectx)
+```
+```{r}
+library(class)
+library(caret)
+library(lattice)
+library(ggplot2)
+library(ISLR)
+library(pROC)
+library(tidyr)
+library(dplyr)
+library(tidyverse)
+library(e1071)
+```
+
+
+## Problem Statement
+```{r}
+
+```
+
+```{r}
+# Convert cylinder into a factor, rather than numeric, and verify it is indeed a factor now.
+
+```
+
+```
+#selected.var <- c("ZInvestFacilitation", "InvestFacilitation", "ZInvestProm", "InvestProm", "InvProm_X_InvestFacil", "FDIInflow") # multiple regression analysis
+```
+
+```{r}
+FinalProjectx_range_normalized <- preProcess(FinalProjectx, method = "range")
+FinalProjectx_normalized = predict(FinalProjectx_range_normalized, FinalProjectx)
+summary(FinalProjectx_normalized)
+```
+
+```{r echo=TRUE}
+#Linear Regression
+# Creates a linear model for weight vs horsepower and displays a plot of the points
+Modela = lm(FDIInflow ~  FinalProjectx $ InvestProm, data = FinalProjectx)
+summary(Modela)
+plot(FinalProjectx $ FDIInflow, FinalProjectx $ InvestProm, xlab = "FDIInflow (FDI)", ylab = "InvestProm (IP)", main = " InvestProm against FDIInflow", col = "blue")
+```
+***
+#From this linear model we can see that Investment Promotion Services results in a model that the P Value is insignificant (0.52), and that it accounts for 0.13% of the variation in Foreign Direct Investment Inflow.
+
+```{r echo=TRUE}
+# Creates a linear model for weight vs horsepower and displays a plot of the points
+
+Modelb = lm(FDIInflow ~ FinalProjectx $ InvestFacilitation, data = FinalProjectx)
+
+summary(Modelb)
+
+plot(FinalProjectx $ FDIInflow, FinalProjectx $ InvestFacilitationx, xlab = "FDIInflow (FDI)", ylab = "InvestFacilitation (IF)", main = " InvestFacilitation against FDIInflow", col = "blue")
+```
+
+
+```{r echo=TRUE}
+
+```
+***
+#From this linear model we can see that Investment Facilitation Services results in a model that the P Value is almost significant (0.067), and that it accounts for 1.08% of the variation in Foreign Direct Investment Inflow.
+```{r}
+# Creates a linear model for weight vs horsepower and displays a plot of the points
+Modelc = lm(FDIInflow ~ InvestFacilitation+InvestProm, data = FinalProjectx)
+summary(Modelc)
+plot(FinalProjectx$FDIInflow, FinalProjectx $ InvestFacilitationx, xlab = "FDIInflow (FDI)", ylab = "InvestFacilandProm (IF)", main = " InvestFacilandProm against FDIInflow", col = "red")
+```
+
+
+#When we created a model that contains both Investment Facilitation and Investment Promotion, this time we have a highly significant P value of IF (0.022), and we see that the total model accounts for 1.83% of the variability in FDI Inflow. 
+
+b)	Build a model that uses the number of cylinders (cyl) and the mile per gallon (mpg) values of a car to predict the car Horse Power (hp). 
+
+```{r echo=TRUE}
+#A combined moderated effects of Standardized (Z-Score)IP and IF 
+Modeld = lm(FDIInflow ~ ZInvestProm + ZInvestFacilitation + InvProm_X_InvestFacil, data = FinalProjectx)
+summary(Modeld)
+plot(FinalProjectx$FDIInflow, FinalProjectx$InvProm_X_InvestFacil, xlab = "FDIInflow (FDI)", ylab = "InvProm_X_InvestFacil (IP_IF)", main = " InvProm_X_InvestFacil against FDIInflow", col = "blue")
+```
+
+
+#Now we created a model that contains the standardized (Z-Score) of both Investment Facilitation and Investment Promotion and Investment FacilitationXInvestment Promotion, we have a highly significant P value of ZIF (0.039). Although the result indicates there was a non-significant interaction effect (p-value = 0.178) of FacilitationXInvestmen, we may still consider meaningful moderation to be present (Hayes 2013, Matthes and Jörg 2020)Johnson-Neyman Plot. It could also be seen that the total model accounts for 2.4 % of the variability in FDI Inflow.
+
+-------------------------------------------------------------------------------------
+
+***
+
+# We now use Naive Bayes on Moderated (Interactive) variables to predict Foreign Direct Investment Inflows.
+
+
+
+We will use the e1070 package.
+```{r}
+library(caret)
+library(ISLR)
+library(e1071)  
+
+```
+
+# we divide data set into training and test
+```{r}
+#Divide data into test and train
+FinalProjectx_Index_Train<-createDataPartition(FinalProjectx$FDIInflow, p=0.8, list=FALSE)
+Train <-FinalProjectx[FinalProjectx_Index_Train,]
+Test  <-FinalProjectx[-FinalProjectx_Index_Train,]
+```
+
+#Now, run the Naive Bayes clasifier model, and predict FDI status on the test set
+```{r}
+# Build a naïve Bayes classifier
+FinalProjectx_nb_model <-naiveBayes(FDIInflow~ZInvestProm + ZInvestFacilitation + InvProm_X_InvestFacil,data = Train)
+FinalProjectx_nb_model
+```
+
+#The first part of the output above shows the ratios of default (yes) and default (no) in the training set (called a priori probabilities), followed by a table giving for each target class, mean and standard deviation of the (sub-)variable. Also, note that the Naive Bayes algorithm assumes a Normal distribution for the independent variables. In accordance with the rule of the use of categorical predictors (the independent variables have been converted to categorical), we now have the conditional probabilities p(X|Y) for each attribute level given the default status.
+
+Now, use the model on the test set
+```{r}
+# Predict the default status of test dataset 
+FinalProjectx_Predicted_Test_labels <-predict(FinalProjectx_nb_model,Test)
+library(gmodels)
+# Show the confusion matrix of the classifier
+CrossTable(x=Test$FDIInflow,y=FinalProjectx_Predicted_Test_labels, prop.chisq = FALSE) 
+```
+
+#Our results indicate that we mis-classified a total of 61 cases. X as False Positives, and X as False Negatives.
+
+***
+
+#It is sometimes useful to output the raw prediction probabilities rather than the predicted class. To do that, we use the raw option in the model.
+```{r}
+FinalProjectx_nb_model <- naiveBayes(FDIInflow~ZInvestProm + ZInvestFacilitation + InvProm_X_InvestFacil,data = Train)
+#Make predictions and return probability of each class
+FinalProjectx_Predicted_Test_labels <-predict(FinalProjectx_nb_model,Test, type = "raw")
+#show the first few values 
+head(FinalProjectx_Predicted_Test_labels)
+```
+
+***
+
+## ROC Curves
+
+We can now output the ROC curves. we should remember that ROC curves plot sensitivity (true positive rate) versus (1 - specificity), which is (1 - TNR) or false positive rate. See [here](https://en.wikipedia.org/wiki/Receiver_operating_characteristic)  for more details 
+
+```{r}
+# install.packages("pROC") # install if necessary
+library(pROC)
+#Passing the second column of the predicted probabilities 
+#That column contains the probability associate to ‘yes’
+roc(Test$FDIInflow, FinalProjectx_Predicted_Test_labels[, 2])
+plot.roc(Test$FDIInflow,FinalProjectx_Predicted_Test_labels[,2])
+```
+
+The AUC is 0.6667. The ROC curve is also plotted, though note that the X-Axis is Specificity (True Negative Rate), rather than 1-Specificity (False Positive Rate). This function can also be thought of as a plot of the FDI as a function of the Type I Error of the decision rule.
+
+***
+
+# Box-Cox Transformation
+
+We first illustrate the transformation of data using the Box-Cox transformation approach
+```{r}
+library(ISLR)
+library(caret)
+#Create a Box-Cox Transformation Model
+FinalProjectx_Box_Cox_Transform<-preProcess(FinalProjectx,method = "BoxCox")
+FinalProjectx_Box_Cox_Transform
+```
+
+ Now, we apply the transformation
+```{r}
+FinalProjectx_Transformed=predict(FinalProjectx_Box_Cox_Transform, FinalProjectx)
+y <- FinalProjectx_Transformed$InvProm_X_InvestFacil
+h<-hist(y, breaks=10, col="green", xlab="FDIInflow",
+   main="Histogram before Transformation")
+xfit<-seq(min(y),max(y),length=40)
+yfit<-dnorm(xfit,mean=mean(y),sd=sd(y))
+yfit <- yfit*diff(h$mids[1:2])*length(y)
+lines(xfit, yfit, col="red", lwd=2) 
+```
+***
+
+## Hypertuning
+
+```{r}
+library(caret)
+library(ISLR)
+
+set.seed(123)
+#Divide data into test and train
+Index_Train<-createDataPartition(FinalProjectx$FDIInflow, p=0.8, list=FALSE)
+Train <-FinalProjectx[Index_Train,]
+Test  <-FinalProjectx[-Index_Train,]
+
+
+
+nb_model <- Train (FDIInflow ~ ZInvestProm + ZInvestFacilitation + InvProm_X_InvestFacil, data = Train, preProc = c("BoxCox", "center", "scale"))
+# Predict the default status of test dataset 
+Predicted_Test_labels <- predict(FinalProjectx_nb_model,Test)
+```
+
+```{r}
+library(gmodels)
+# Show the confusion matrix of the classifier
+CrossTable(x=Test$FDIInflow,y=Predicted_Test_labels, prop.chisq = FALSE) 
+```
+

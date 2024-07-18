@@ -1,0 +1,48 @@
+---
+title: "Assignment4"
+Name : "Maddukuri Janakisrija"
+Date : "10/25/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r}
+setwd("~/Documents/GitHub/64018_jmadduku/Assignment4")
+```
+
+# Transportation Problem:
+
+```{r}
+library(lpSolveAPI)
+transportation.lp <- read.lp ("transportation.lp")
+```
+
+# Printing the Transportation Model
+```{r}
+transportation.lp
+solve(transportation.lp)
+```
+
+#To print the optimum solution for Model
+
+```{r}
+get.objective(transportation.lp)
+```
+# The optimum solution for the model is 132,790 which is the combined cost of both production and shipping.
+
+
+# To print the optimum values from the units produced and shipped from the plant to warehouse.
+
+```{r}
+decision_Vars <- get.variables(transportation.lp)
+print(paste("optimum values of decision variables are:", as.data.frame(decision_Vars)))
+```
+
+# To print the optimum values for the constraints which have feasible solution.
+
+```{r}
+const <- get.constraints(transportation.lp)
+print(paste("The optimum values of the constraints are:", as.data.frame(const)))
+```
